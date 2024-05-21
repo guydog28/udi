@@ -88,10 +88,3 @@ jobs:
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Create latest release
-      if: env.BASE_IMAGE_CHANGED == 'true'
-      run: |
-        gh release create latest --title "Latest Release" --notes "${{ env.BASE_IMAGE_DIGEST }}" --target "$(git rev-parse HEAD)" --draft=false --prerelease=false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
