@@ -1,0 +1,64 @@
+name: Check Base Image and Build
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight
+  workflow_dispatch:
+
+jobs:
+  check-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Get current base image digest
+      id: get_digest
+      run: |
+        echo "BASE_IMAGE=${{ secrets.BASE_IMAGE }}" >> $GITHUB_ENV
+        DIGEST=$(docker pull ${{ secrets.BASE_IMAGE }} | grep Digest | awk '{print $2}')
+        echo "BASE_IMAGE_DIGEST=${DIGEST}" >> $GITHUB_ENV
+
+    - name: Get previous base image digest
+      id: get_previous_digest
+      run: |
+        if gh release view latest > /dev/null 2>&1; then
+          PREV_DIGEST=$(gh release view latest --json body -q .body)
+          echo "PREVIOUS_BASE_IMAGE_DIGEST=${PREV_DIGEST}" >> $GITHUB_ENV
+        else
+          echo "No previous release found"
+          echo "PREVIOUS_BASE_IMAGE_DIGEST=" >> $GITHUB_ENV
+        fi
+
+    - name: Compare digests and build if changed
+      id: compare_and_build
+      run: |
+        if [ "${{ env.BASE_IMAGE_DIGEST }}" != "${{ env.PREVIOUS_BASE_IMAGE_DIGEST }}" ]; then
+          echo "Base image has changed. Building the Docker image."
+          echo "BASE_IMAGE_CHANGED=true" >> $GITHUB_ENV
+          docker buildx build --platform linux/amd64 --build-arg BASE_IMAGE=${{ secrets.BASE_IMAGE }} --push -t ${{ secrets.DOCKER_USERNAME }}/my-app:latest .
+        else
+          echo "Base image has not changed. Skipping the build."
+          echo "BASE_IMAGE_CHANGED=false" >> $GITHUB_ENV
+        fi
+
+    - name: Create a new release
+      if: env.BASE_IMAGE_CHANGED == 'true'
+      uses: actions/create-release@v1
+      with:
+        tag_name: latest
+        release_name: 'Base image updated'
+        body: ${{ env.BASE_IMAGE_DIGEST }}
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
