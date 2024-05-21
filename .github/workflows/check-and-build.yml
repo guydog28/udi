@@ -51,7 +51,7 @@ jobs:
           next_minor_version=$((minor_version + 1))
           next_version="${major_version}.${next_minor_version}"
         else
-          next_version="0.1"
+          next_version="1.0"
         fi
         echo "NEXT_VERSION=${next_version}" >> $GITHUB_ENV
         echo "NEXT_TAG=v${next_version}" >> $GITHUB_ENV
@@ -62,7 +62,7 @@ jobs:
         if [ "${{ env.BASE_IMAGE_DIGEST }}" != "${{ env.LATEST_BODY }}" ]; then
           echo "Base image has changed. Building the Docker image."
           echo "BASE_IMAGE_CHANGED=true" >> $GITHUB_ENV
-          docker buildx build --platform linux/amd64 --build-arg BASE_IMAGE=${{ vars.BASE_IMAGE }} --push -t ${{ secrets.DOCKER_USERNAME }}/udi:latest .
+          docker buildx build --platform linux/amd64 --build-arg BASE_IMAGE=${{ vars.BASE_IMAGE }} --tag ${{ secrets.DOCKER_USERNAME }}/udi:latest --tag ${{ secrets.DOCKER_USERNAME }}/udi:${{ env.NEXT_VERSION }} --push
         else
           echo "Base image has not changed. Skipping the build."
           echo "BASE_IMAGE_CHANGED=false" >> $GITHUB_ENV
@@ -75,7 +75,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ env.NEXT_TAG }}
-        release_name: 'v${{ env.NEXT_VERSION }}'
+        release_name: ${{ env.NEXT_TAG }}
         body: ${{ env.BASE_IMAGE_DIGEST }}
         draft: false
         prerelease: false
@@ -83,7 +83,9 @@ jobs:
     - name: Delete existing latest release
       if: env.BASE_IMAGE_CHANGED == 'true'
       run: |
-        gh release delete latest --yes
+        if gh release view latest > /dev/null 2>&1; then
+          gh release delete latest --yes
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
