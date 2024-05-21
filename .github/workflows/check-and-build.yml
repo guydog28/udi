@@ -54,10 +54,11 @@ jobs:
     - name: Create a new release
       if: env.BASE_IMAGE_CHANGED == 'true'
       uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: latest
         release_name: 'Base image updated'
         body: ${{ env.BASE_IMAGE_DIGEST }}
         draft: false
         prerelease: false
-        token: ${{ secrets.GITHUB_TOKEN }}
