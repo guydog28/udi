@@ -36,7 +36,7 @@ jobs:
       id: get_previous_digest
       run: |
         if gh release view latest > /dev/null 2>&1; then
-          PREV_DIGEST=$(gh release view latest --json body -q .body 2>/dev/null || echo "")
+          PREV_DIGEST=$(gh release view latest --json body -q .body)
           echo "PREVIOUS_BASE_IMAGE_DIGEST=${PREV_DIGEST}" >> $GITHUB_ENV
         else
           echo "No previous release found"
@@ -54,14 +54,30 @@ jobs:
           echo "Base image has not changed. Skipping the build."
           echo "BASE_IMAGE_CHANGED=false" >> $GITHUB_ENV
         fi
+    - name: Determine next version
+      id: next_version
+      run: |
+        if gh release view latest > /dev/null 2>&1; then
+          latest_tag=$(gh release view latest --json tagName -q '.tagName')
+          latest_version=${latest_tag#v}
+          major_version=${latest_version%.*}
+          minor_version=${latest_version##*.}
+          next_minor_version=$((minor_version + 1))
+          next_version="${major_version}.${next_minor_version}"
+        else
+          next_version="1.0"
+        fi
+        echo "NEXT_VERSION=${next_version}" >> $GITHUB_ENV
+        echo "NEXT_TAG=v${next_version}" >> $GITHUB_ENV
+
     - name: Create a new release
       if: env.BASE_IMAGE_CHANGED == 'true'
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: latest
-        release_name: 'Base image updated'
+        tag_name: ${{ env.NEXT_TAG }}
+        release_name: 'v${{ env.NEXT_VERSION }}'
         body: ${{ env.BASE_IMAGE_DIGEST }}
         draft: false
         prerelease: false
