@@ -54,6 +54,7 @@ jobs:
           echo "Base image has not changed. Skipping the build."
           echo "BASE_IMAGE_CHANGED=false" >> $GITHUB_ENV
         fi
+
     - name: Determine next version
       id: next_version
       run: |
@@ -70,7 +71,7 @@ jobs:
         echo "NEXT_VERSION=${next_version}" >> $GITHUB_ENV
         echo "NEXT_TAG=v${next_version}" >> $GITHUB_ENV
 
-    - name: Create a new release
+    - name: Create a new release with version tag
       if: env.BASE_IMAGE_CHANGED == 'true'
       uses: actions/create-release@v1
       env:
@@ -81,3 +82,12 @@ jobs:
         body: ${{ env.BASE_IMAGE_DIGEST }}
         draft: false
         prerelease: false
+
+    - name: Update latest tag
+      if: env.BASE_IMAGE_CHANGED == 'true'
+      run: |
+        git fetch --tags
+        git tag -fa latest -m "Update latest tag to ${{ env.NEXT_TAG }}"
+        git push origin --tags --force
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
