@@ -51,7 +51,7 @@ jobs:
           next_minor_version=$((minor_version + 1))
           next_version="${major_version}.${next_minor_version}"
         else
-          next_version="1.0"
+          next_version="0.1"
         fi
         echo "NEXT_VERSION=${next_version}" >> $GITHUB_ENV
         echo "NEXT_TAG=v${next_version}" >> $GITHUB_ENV
