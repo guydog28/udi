@@ -44,8 +44,8 @@ jobs:
     - name: Determine next version
       id: next_version
       run: |
-        if [ "${{ env.LATEST_TAG }}" != "null" ]; then
-          latest_version=${{ env.LATEST_TAG#v }}
+        if [ "${LATEST_TAG}" != "null" ]; then
+          latest_version=${LATEST_TAG#v}
           major_version=${latest_version%.*}
           minor_version=${latest_version##*.}
           next_minor_version=$((minor_version + 1))
@@ -80,9 +80,16 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Update latest release
+    - name: Delete existing latest release
       if: env.BASE_IMAGE_CHANGED == 'true'
       run: |
-        gh release create latest --title "Latest Release" --notes "${{ env.BASE_IMAGE_DIGEST }}" --target "$(git rev-parse HEAD)" --draft=false --prerelease=false --latest
+        gh release delete latest --yes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create latest release
+      if: env.BASE_IMAGE_CHANGED == 'true'
+      run: |
+        gh release create latest --title "Latest Release" --notes "${{ env.BASE_IMAGE_DIGEST }}" --target "$(git rev-parse HEAD)" --draft=false --prerelease=false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
