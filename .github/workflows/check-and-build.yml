@@ -8,6 +8,7 @@ on:
 jobs:
   check-and-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
     - name: Checkout repository
@@ -49,7 +50,12 @@ jobs:
         else
           echo "Base image has not changed. Skipping the build."
           echo "BASE_IMAGE_CHANGED=false" >> $GITHUB_ENV
-        fi
+
+    - name: Cleanup
+      if: always()
+      run: |
+        docker logout
+        docker system prune -f
 
     - name: Create a new release
       if: env.BASE_IMAGE_CHANGED == 'true'
