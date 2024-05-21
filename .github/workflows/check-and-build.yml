@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - main
-      
+
 jobs:
   check-and-build:
     runs-on: ubuntu-latest
@@ -53,13 +53,7 @@ jobs:
         else
           echo "Base image has not changed. Skipping the build."
           echo "BASE_IMAGE_CHANGED=false" >> $GITHUB_ENV
-
-    - name: Cleanup
-      if: always()
-      run: |
-        docker logout
-        docker system prune -f
-
+        fi
     - name: Create a new release
       if: env.BASE_IMAGE_CHANGED == 'true'
       uses: actions/create-release@v1
