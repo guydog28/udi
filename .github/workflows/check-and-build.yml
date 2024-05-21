@@ -33,7 +33,7 @@ jobs:
       id: get_previous_digest
       run: |
         if gh release view latest > /dev/null 2>&1; then
-          PREV_DIGEST=$(gh release view latest --json body -q .body)
+          PREV_DIGEST=$(gh release view latest --json body -q .body 2>/dev/null || echo "")
           echo "PREVIOUS_BASE_IMAGE_DIGEST=${PREV_DIGEST}" >> $GITHUB_ENV
         else
           echo "No previous release found"
