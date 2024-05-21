@@ -32,35 +32,20 @@ jobs:
         DIGEST=$(docker pull ${{ vars.BASE_IMAGE }} | grep Digest | awk '{print $2}')
         echo "BASE_IMAGE_DIGEST=${DIGEST}" >> $GITHUB_ENV
 
-    - name: Get previous base image digest
-      id: get_previous_digest
+    - name: Get latest release information
+      id: get_latest_release
       run: |
-        if gh release view latest > /dev/null 2>&1; then
-          PREV_DIGEST=$(gh release view latest --json body -q .body)
-          echo "PREVIOUS_BASE_IMAGE_DIGEST=${PREV_DIGEST}" >> $GITHUB_ENV
-        else
-          echo "No previous release found"
-          echo "PREVIOUS_BASE_IMAGE_DIGEST=" >> $GITHUB_ENV
-        fi
-
-    - name: Compare digests and build if changed
-      id: compare_and_build
-      run: |
-        if [ "${{ env.BASE_IMAGE_DIGEST }}" != "${{ env.PREVIOUS_BASE_IMAGE_DIGEST }}" ]; then
-          echo "Base image has changed. Building the Docker image."
-          echo "BASE_IMAGE_CHANGED=true" >> $GITHUB_ENV
-          docker buildx build --platform linux/amd64 --build-arg BASE_IMAGE=${{ vars.BASE_IMAGE }} --push -t ${{ secrets.DOCKER_USERNAME }}/udi:latest .
-        else
-          echo "Base image has not changed. Skipping the build."
-          echo "BASE_IMAGE_CHANGED=false" >> $GITHUB_ENV
-        fi
+        response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/latest)
+        latest_tag=$(echo $response | jq -r .tag_name)
+        echo "LATEST_TAG=${latest_tag}" >> $GITHUB_ENV
+        latest_body=$(echo $response | jq -r .body)
+        echo "LATEST_BODY=${latest_body}" >> $GITHUB_ENV
 
     - name: Determine next version
       id: next_version
       run: |
-        if gh release view latest > /dev/null 2>&1; then
-          latest_tag=$(gh release view latest --json tagName -q '.tagName')
-          latest_version=${latest_tag#v}
+        if [ "${{ env.LATEST_TAG }}" != "null" ]; then
+          latest_version=${{ env.LATEST_TAG#v }}
           major_version=${latest_version%.*}
           minor_version=${latest_version##*.}
           next_minor_version=$((minor_version + 1))
@@ -70,6 +55,18 @@ jobs:
         fi
         echo "NEXT_VERSION=${next_version}" >> $GITHUB_ENV
         echo "NEXT_TAG=v${next_version}" >> $GITHUB_ENV
+
+    - name: Compare digests and build if changed
+      id: compare_and_build
+      run: |
+        if [ "${{ env.BASE_IMAGE_DIGEST }}" != "${{ env.LATEST_BODY }}" ]; then
+          echo "Base image has changed. Building the Docker image."
+          echo "BASE_IMAGE_CHANGED=true" >> $GITHUB_ENV
+          docker buildx build --platform linux/amd64 --build-arg BASE_IMAGE=${{ vars.BASE_IMAGE }} --push -t ${{ secrets.DOCKER_USERNAME }}/udi:latest .
+        else
+          echo "Base image has not changed. Skipping the build."
+          echo "BASE_IMAGE_CHANGED=false" >> $GITHUB_ENV
+        fi
 
     - name: Create a new release with version tag
       if: env.BASE_IMAGE_CHANGED == 'true'
@@ -83,11 +80,9 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Update latest tag
+    - name: Update latest release
       if: env.BASE_IMAGE_CHANGED == 'true'
       run: |
-        git fetch --tags
-        git tag -fa latest -m "Update latest tag to ${{ env.NEXT_TAG }}"
-        git push origin --tags --force
+        gh release create latest --title "Latest Release" --notes "${{ env.BASE_IMAGE_DIGEST }}" --target "$(git rev-parse HEAD)" --draft=false --prerelease=false --latest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
