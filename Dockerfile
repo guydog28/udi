@@ -2,6 +2,8 @@ ARG BASE_IMAGE=quay.io/devfile/universal-developer-image
 
 FROM ${BASE_IMAGE}
 
+USER 0 
+
 RUN yum upgrade -y && yum -y install nss alsa-lib.x86_64 atk.x86_64 \
     cups-libs.x86_64 gtk3.x86_64 libdrm libXcomposite.x86_64 libXcursor.x86_64 \
     libXdamage.x86_64 libXext.x86_64 libXi.x86_64 libXrandr.x86_64 libXScrnSaver.x86_64 \
