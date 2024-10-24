@@ -82,6 +82,7 @@ jobs:
         else
           echo "No changes detected. Skipping the build."
           echo "BUILD_REQUIRED=false" >> $GITHUB_ENV
+        fi
 
     - name: Create a new release with version tag
       if: env.BUILD_REQUIRED == 'true'
