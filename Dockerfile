@@ -13,8 +13,8 @@ RUN yum upgrade -y && yum -y install nss alsa-lib.x86_64 atk.x86_64 \
 # Upgrade NodeJS
 RUN mkdir -p /home/tooling/.nvm/
 ENV NVM_DIR="/home/tooling/.nvm"
-ENV NODEJS_20_VERSION=20.18.0 # newest 20 dot release
-ENV NODEJS_18_VERSION=18.20.4 # newest 18 dot release
+ENV NODEJS_20_VERSION=20.18.0 # newest 20 release
+ENV NODEJS_18_VERSION=18.20.4 # newest 18 release
 ENV NODEJS_DEFAULT_VERSION=${NODEJS_20_VERSION}
 RUN source /home/user/.bashrc && \
     nvm install v${NODEJS_20_VERSION} && \
