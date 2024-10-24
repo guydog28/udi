@@ -11,10 +11,8 @@ RUN yum upgrade -y && yum -y install nss alsa-lib.x86_64 atk.x86_64 \
     yum update nss -y && yum clean all -y # buildkit
 
 # Upgrade NodeJS
-# delete old installs
-RUN source /home/user/.bashrc && \
-    nvm uninstall v${NODEJS_20_VERSION} && \
-    nvm uninstall v${NODEJS_18_VERSION}
+ENV OLD_NODEJS_18_VERSION=${NODEJS_18_VERSION}
+ENV OLD_NODEJS_20_VERSION=${NODEJS_20_VERSION}
 
 # newest 20 release
 ENV NODEJS_20_VERSION=20.18.0
@@ -25,7 +23,8 @@ RUN source /home/user/.bashrc && \
     nvm install v${NODEJS_20_VERSION} && \
     nvm install v${NODEJS_18_VERSION} && \
     nvm alias default v${NODEJS_DEFAULT_VERSION} && nvm use v${NODEJS_DEFAULT_VERSION} && \
-    npm install --global yarn@v1.22.17
+    nvm uninstall v${OLD_NODEJS_20_VERSION} && \
+    nvm uninstall v${OLD_NODEJS_18_VERSION}
 ENV PATH=$NVM_DIR/versions/node/v${NODEJS_DEFAULT_VERSION}/bin:$PATH
 ENV NODEJS_HOME_20=$NVM_DIR/versions/node/v${NODEJS_20_VERSION}
 ENV NODEJS_HOME_18=$NVM_DIR/versions/node/v${NODEJS_18_VERSION}
