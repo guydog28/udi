@@ -10,6 +10,8 @@ RUN yum upgrade -y && yum -y install nss alsa-lib.x86_64 atk.x86_64 \
     libXtst.x86_64 mesa-libgbm pango.x86_64 xorg-x11-fonts-misc xorg-x11-fonts-Type1  && \
     yum update nss -y && yum clean all -y # buildkit
 
+USER 10001
+
 # Upgrade NodeJS
 ENV OLD_NODEJS_18_VERSION=${NODEJS_18_VERSION}
 ENV OLD_NODEJS_20_VERSION=${NODEJS_20_VERSION}
@@ -32,6 +34,3 @@ ENV PATH=$NVM_DIR/versions/node/v${NODEJS_DEFAULT_VERSION}/bin:$PATH
 ENV NODEJS_HOME_22=$NVM_DIR/versions/node/v${NODEJS_22_VERSION}
 ENV NODEJS_HOME_20=$NVM_DIR/versions/node/v${NODEJS_20_VERSION}
 ENV NODEJS_HOME_18=$NVM_DIR/versions/node/v${NODEJS_18_VERSION}
-
-
-USER 10001
