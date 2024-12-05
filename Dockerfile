@@ -18,20 +18,20 @@ ENV HOME=/home/tooling
 ENV OLD_NODEJS_18_VERSION=${NODEJS_18_VERSION}
 ENV OLD_NODEJS_20_VERSION=${NODEJS_20_VERSION}
 
-RUN source /home/user/.bashrc && \
-    nvm install v18 && \
-    nvm install v20 && \
-    nvm install v22 && \
-    nvm alias default v22 && nvm use v22 && \
-    nvm uninstall v${OLD_NODEJS_20_VERSION} && \
-    nvm uninstall v${OLD_NODEJS_18_VERSION} 
-RUN set N18 = $(nvm version v18)
-RUN set N20 = $(nvm version v20)
-RUN set N22 = $(nvm version v22)
-ENV NODEJS_22_VERSION=$N22
-ENV NODEJS_20_VERSION=$N20
-ENV NODEJS_18_VERSION=$N18
+# newest 22 release
+ENV NODEJS_22_VERSION=22.12.0
+# newest 20 release
+ENV NODEJS_20_VERSION=20.18.1
+# newest 18 release
+ENV NODEJS_18_VERSION=18.20.5
 ENV NODEJS_DEFAULT_VERSION=${NODEJS_22_VERSION}
+RUN source /home/user/.bashrc && \
+    nvm install v${NODEJS_22_VERSION} && \
+    nvm install v${NODEJS_20_VERSION} && \
+    nvm install v${NODEJS_18_VERSION} && \
+    nvm alias default v${NODEJS_DEFAULT_VERSION} && nvm use v${NODEJS_DEFAULT_VERSION} && \
+    nvm uninstall v${OLD_NODEJS_20_VERSION} && \
+    nvm uninstall v${OLD_NODEJS_18_VERSION}
 ENV PATH=$NVM_DIR/versions/node/v${NODEJS_DEFAULT_VERSION}/bin:$PATH
 ENV NODEJS_HOME_22=$NVM_DIR/versions/node/v${NODEJS_22_VERSION}
 ENV NODEJS_HOME_20=$NVM_DIR/versions/node/v${NODEJS_20_VERSION}
