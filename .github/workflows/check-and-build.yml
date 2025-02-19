@@ -78,7 +78,7 @@ jobs:
         if [ "${{ env.BASE_IMAGE_DIGEST }}" != "${{ env.LATEST_BODY }}" ] || [ "${{ env.DOCKERFILE_CHANGED }}" = "true" ]; then
           echo "Either base image or Dockerfile has changed. Building the Docker image."
           echo "BUILD_REQUIRED=true" >> $GITHUB_ENV
-          docker buildx build --platform linux/amd64 --build-arg BASE_IMAGE=${{ vars.BASE_IMAGE }} --tag ${{ secrets.DOCKER_USERNAME }}/udi:${{ env.NEXT_VERSION }} --push .
+          docker buildx build --platform linux/amd64 --build-arg BASE_IMAGE=${{ vars.BASE_IMAGE }} --tag ${{ secrets.DOCKER_USERNAME }}/udi:latest --tag ${{ secrets.DOCKER_USERNAME }}/udi:${{ env.NEXT_VERSION }} --push .
         else
           echo "No changes detected. Skipping the build."
           echo "BUILD_REQUIRED=false" >> $GITHUB_ENV
@@ -90,7 +90,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ env.NEXT_TAG }}-node20
+        tag_name: ${{ env.NEXT_TAG }}
         release_name: ${{ env.NEXT_TAG }}
         body: ${{ env.BASE_IMAGE_DIGEST }}
         draft: false
