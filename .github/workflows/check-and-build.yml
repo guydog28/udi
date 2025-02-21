@@ -48,10 +48,10 @@ jobs:
       id: dockerfile_check
       run: |
         if git diff --exit-code HEAD^ HEAD Dockerfile > /dev/null; then
-          echo "Dockerfile has not changed."
+          echo "Dockerfile has not changed. Only build if upstream change."
           echo "DOCKERFILE_CHANGED=false" >> $GITHUB_ENV
         else
-          echo "Dockerfile has changed."
+          echo "Dockerfile has changed. Build required."
           echo "DOCKERFILE_CHANGED=true" >> $GITHUB_ENV
         fi
 
